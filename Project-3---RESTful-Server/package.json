@@ -1,0 +1,29 @@
+{
+    "name": "RESTful-webserver",
+    "version": "0.0.0",
+    "description": "RESTful Web Server using Node JS",
+    "author": {
+        "name": "Erik Andersen",
+        "email": ""
+    },
+    "contributors": [
+        {
+            "name": "Zack Schuster",
+            "email": ""
+        },
+        {
+            "name": "",
+            "email": ""
+        }
+    ],
+    "main": "server.js",
+    "repository": {
+        "type": "git",
+        "url": ""
+    },
+    "dependencies": {
+        "express": "^4.17.1",
+        "sqlite3": "^5.0.2",
+        "cors": "^2.8.5"
+    }
+}
