@@ -1,9 +1,10 @@
-let express = require('express');
+const express = require('express');
 let sqlite3 = require('sqlite3');
 let fs = require('fs');
 let path = require('path');
 let cors = require('cors');
 const e = require('express');
+
 
 let port = 8000;
 let public_dir = path.join(__dirname, 'public');
@@ -13,6 +14,7 @@ let app = express();
 app.use(express.static(public_dir));
 app.use(express.json());
 app.use(cors());
+app.use(express.urlencoded({ extended: true }));
 
 
 let db = new sqlite3.Database(path.join(public_dir, 'stpaul_crime.sqlite3'), sqlite3.OPEN_READWRITE, (err) => {
@@ -488,6 +490,50 @@ app.get('/incidents', (req, res) => {
         res.status(200).type('json').send(jsonString);
     });
     
+});
+
+app.delete('/remove-incident', (req, res)  => {
+
+    let case_number = JSON.stringify(req.body);
+    //case_number = JSON.stringify(case_number.case_number);
+    case_number = case_number.split("case_number:")[1];
+    case_number = case_number.split("}\"")[0];
+    //console.log(case_number);
+    //case_number = case_number.substring(1,case_number.length);
+    //console.log(case_number);
+    //console.log(req + "---");
+
+    let exists = false;
+    db.all('SELECT case_number FROM Incidents', (err, rows) => {
+        //console.log("test");
+        if(rows == undefined) {
+            
+            res.status(500).send("case " + case_number + " not found in database.");
+            return 0;
+        }
+        
+        for(let i = 0; i < rows.length; i++) {
+            if(rows[i].case_number == case_number) {
+                exists = true;
+            }
+        }
+        if(exists == true) {
+            
+            db.all('DELETE FROM Incidents WHERE case_number=?', [case_number], (err) => {
+                //console.log("test2");
+                res.status(200).send("deleted successfully");
+                return 0;
+            });
+        } else {
+            res.status(500).send("case " + case_number + " not found in database.");
+        }
+        
+    });
+
+    
+
+ 
+
 });
 
 app.listen(port, '0.0.0.0');
