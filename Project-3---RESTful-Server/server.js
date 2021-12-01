@@ -17,6 +17,7 @@ app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 
 
+
 let db = new sqlite3.Database(path.join(public_dir, 'stpaul_crime.sqlite3'), sqlite3.OPEN_READWRITE, (err) => {
     if (err) {
         console.log(err);
@@ -127,7 +128,6 @@ app.get('/neighborhoods', (req, res) => {
 });
 
 app.get('/incidents', (req, res) => {
-    
     let start_date = req.query.start_date + "";
     let end_date = req.query.end_date + "";
     let code = req.query.code + "";
@@ -407,7 +407,7 @@ app.get('/incidents', (req, res) => {
                                                     if(neighborhoodArray != undefined) {
                                                         let neighborhood = incidentArray[i].split("\"neighborhood_number\":")[1];
                                                         neighborhood = parseInt(neighborhood.split(",\"block\":\"")[0]);
-                                                        for(let n = 0; n < neighborhoodArray.length; mn++) {
+                                                        for(let n = 0; n < neighborhoodArray.length; n++) {
                                                             if(parseInt(neighborhoodArray[n]) == neighborhood) {
                                                                 jsonString += incidentArray[i];
                                                                 count++;
@@ -485,12 +485,91 @@ app.get('/incidents', (req, res) => {
             //jsonString += incidentArray[i];
         }
         jsonString = jsonString.substring(0, jsonString.length - 1);
-        
+        //jsonString = "[" + jsonString + "]";
+        if(jsonString.substring(0,1) !="[") {
+            jsonString = "[" + jsonString;
+        }
+        if(jsonString.substring(jsonString.length - 1,jsonString.length) !="]") {
+            jsonString = jsonString + "]";
+        }
+
         //console.log(jsonString);
         res.status(200).type('json').send(jsonString);
     });
     
 });
+
+app.put('/new-incident', (req, res) => {
+
+    let reqString = JSON.stringify(req.body);
+
+    let case_number = reqString.split(",\"date")[0].substring(2,reqString.split(",\"date")[0].length);
+    let date = reqString.split("date\":")[1];
+    date = "\"date\":" + date;
+    date = date.split(",\"time\"")[0];
+    let time = reqString.split("time\":")[1];
+    time = "\"time\":" + time;
+    time = time.split(",\"code\"")[0];
+    let code = reqString.split("code\":")[1];
+    code = "\"code\":" + code;
+    code = code.split(",\"incident\"")[0];
+    let incident = reqString.split("incident\":")[1];
+    incident = "\"incident\":" + incident;
+    incident = incident.split(",\"police_grid\"")[0];
+    let police_grid = reqString.split("police_grid\":")[1];
+    police_grid = "\"police_grid\":" + police_grid;
+    police_grid = police_grid.split(",\"neighborhood_number\"")[0];
+    let neighborhood_number = reqString.split("neighborhood_number\":")[1];
+    neighborhood_number = "\"neighborhood_number\":" + neighborhood_number;
+    neighborhood_number = neighborhood_number.split(",\"block\"")[0];
+    let block = reqString.split("block\":")[1];
+    block = "\"block\":" + block;
+    block = block.split("}]")[0];
+
+    // Checking if case number is already in or doesn't exist
+
+    if(case_number == undefined) {
+
+        res.status(500).send('There is no case number');
+
+        return 0;
+
+    }
+
+    
+ 
+
+   
+
+ 
+    //console.log(case_number + "\n" + date + "\n" + time + "\n" + code + "\n" + incident + "\n" + police_grid + "\n" + neighborhood_number + "\n" + block);
+    
+    let date_time;
+    date_time = date + "T";
+    date_time += time;
+
+    // Insert data into the db
+
+    let sql = 'INSERT INTO Incidents(case_number,date_time,code,incident,police_grid,neighborhood_number,block) VALUES(?,?,?,?,?,?,?)';
+
+    db.run(sql,[case_number,date_time,code,incident,police_grid,neighborhood_number,block], (error) => {
+
+        if(error) {
+
+            res.status(500).send('Error inserting into database');
+
+            return 0;
+
+        }
+        res.status(200).send("Inserted into database successfully");
+
+    });
+
+});
+
+ 
+
+ 
 
 app.delete('/remove-incident', (req, res)  => {
 
@@ -535,5 +614,9 @@ app.delete('/remove-incident', (req, res)  => {
  
 
 });
+
+ 
+
+
 
 app.listen(port, '0.0.0.0');
